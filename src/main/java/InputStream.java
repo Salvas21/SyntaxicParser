@@ -10,17 +10,17 @@ public class InputStream implements Stream<Character> {
 
     @Override
     public Character peek() {
-        return null;
+        return input[position];
     }
 
     @Override
     public Character next() {
-        return null;
+        return input[position++];
     }
 
     @Override
     public boolean endOfStream() {
-        return false;
+        return position == input.length - 1;
     }
 
 }
