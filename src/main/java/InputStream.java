@@ -23,7 +23,4 @@ public class InputStream implements Stream<Character> {
         return false;
     }
 
-    public char[] getInput() {
-        return input;
-    }
 }
