@@ -2,8 +2,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Lexer {
-    private InputStream inputStream;
-//    private final String keywords = " Procedure Fin_Procedure declare entier reel ";
+    private final InputStream inputStream;
     private final String[] keywords = {"Procedure", "Fin_Procedure", "declare", "entier", "reel"};
     private ArrayList<Token> tokens;
 
@@ -18,11 +17,10 @@ public class Lexer {
             readWhile(' ');
             if (inputStream.endOfStream()) return null;
             char c = inputStream.peek();
-            if (isDigit(c)) tokens.add(readDigit());
-            if (isIdentifier(c)) tokens.add(readIdentifier());
-            if (isPunctuation(c)) tokens.add(readPunctuation());
-            if (isOperator(c)) tokens.add(readOperator());
-            // anything else is not part of the language
+            if (isDigit(c)) readDigit();
+            if (isIdentifier(c)) readIdentifier();
+            if (isPunctuation(c)) readPunctuation();
+            if (isOperator(c)) readOperator();
         }
 
         return new TokenStream(tokens);
@@ -38,7 +36,7 @@ public class Lexer {
         return Character.isDigit(c);
     }
 
-    private Token readDigit() {
+    private void readDigit() {
         StringBuilder digit = new StringBuilder();
         char c = inputStream.peek();
         while (!inputStream.endOfStream() && c != ' ') {
@@ -46,11 +44,16 @@ public class Lexer {
             c = inputStream.peek();
         }
         if (inputStream.endOfStream()) digit.append(inputStream.next());
-        return new Token(TokenType.NUMBER, digit.toString());
+        // TODO : check if digit has only 1 ,
+        tokens.add(new Token(TokenType.NUMBER, digit.toString()));
     }
 
     private boolean isIdentifier(char c) {
         return Character.isAlphabetic(c);
+    }
+
+    private boolean hasSemicolon(String s) {
+        return s.contains(";");
     }
 
     private String removeSemicolon(String identifier) {
@@ -58,31 +61,33 @@ public class Lexer {
     }
 
     private boolean isKeyword(String identifier) {
-        // TODO : identifier can be set as a keyword if letter contained in the whole string
-        identifier = removeSemicolon(identifier);
         return Arrays.asList(keywords).contains(identifier);
     }
 
-    private Token readIdentifier() {
+    private void readIdentifier() {
         StringBuilder identifier = new StringBuilder();
         char c = inputStream.peek();
         while (!inputStream.endOfStream() && c != ' ') {
             identifier.append(inputStream.next());
             c = inputStream.peek();
         }
-        if (inputStream.endOfStream()) identifier.append(inputStream.next()); // TODO : ???
-        // TODO : look for semicolon
-        TokenType tokenType = isKeyword(identifier.toString()) ? TokenType.KEYWORD : TokenType.IDENTIFIER;
+        if (inputStream.endOfStream()) identifier.append(inputStream.next());
+
+        boolean semicolon = hasSemicolon(identifier.toString());
+        String id = semicolon ? removeSemicolon(identifier.toString()) : identifier.toString();
+        TokenType tokenType = isKeyword(id) ? TokenType.KEYWORD : TokenType.IDENTIFIER;
+
         // TODO : identifier ne doit pas etre plus long que 8 char, dans lexical ou syntaxique ?
-        return new Token(tokenType, identifier.toString());
+        tokens.add(new Token(tokenType, id));
+        if (semicolon) tokens.add(new Token(TokenType.PUNCTUATION, ";"));
     }
 
     private boolean isPunctuation(char c) {
         return c == '(' || c == ')';
     }
 
-    private Token readPunctuation() {
-        return new Token(TokenType.PUNCTUATION, inputStream.next().toString());
+    private void readPunctuation() {
+        tokens.add(new Token(TokenType.PUNCTUATION, inputStream.next().toString()));
     }
 
     private boolean isOperator(char c) {
@@ -90,7 +95,7 @@ public class Lexer {
         return operators.indexOf(c) >= 0;
     }
 
-    private Token readOperator() {
-        return new Token(TokenType.OPERATOR, inputStream.next().toString());
+    private void readOperator() {
+        tokens.add(new Token(TokenType.OPERATOR, inputStream.next().toString()));
     }
 }
