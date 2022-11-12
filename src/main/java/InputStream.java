@@ -20,7 +20,7 @@ public class InputStream implements Stream<Character> {
 
     @Override
     public boolean endOfStream() {
-        return position == input.length - 1;
+        return position >= input.length - 1;
     }
 
 }

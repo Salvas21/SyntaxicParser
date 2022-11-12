@@ -3,6 +3,10 @@ import java.util.ArrayList;
 public class TokenStream implements Stream<Token> {
     private ArrayList<Token> tokens;
 
+    public TokenStream(ArrayList<Token> tokens) {
+        this.tokens = tokens;
+    }
+
     @Override
     public Token peek() {
         return null;
@@ -16,5 +20,9 @@ public class TokenStream implements Stream<Token> {
     @Override
     public boolean endOfStream() {
         return false;
+    }
+
+    public ArrayList<Token> getTokens() {
+        return tokens;
     }
 }
