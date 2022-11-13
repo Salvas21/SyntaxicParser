@@ -7,6 +7,10 @@ public class ParserStatus {
         this.content = content;
     }
 
+    public boolean isValid() {
+        return status;
+    }
+
     @Override
     public String toString() {
         return "Entrée " + (status ? "valide" : ("non valide" + " : " + content));
