@@ -7,8 +7,15 @@ public class VariableStorage {
         variables = new ArrayList<>();
     }
 
-    public void add(String key, String value) {
-        variables.add(new Variable(key, value));
+    public Variable getVariable(String key) {
+        for (Variable var : variables) {
+            if (var.getKey().equals(key)) return var;
+        }
+        return null;
+    }
+
+    public void add(String key, String type) {
+        variables.add(new Variable(key, type));
     }
 
     public void remove(String key) {
@@ -22,6 +29,7 @@ public class VariableStorage {
                 variable = variables.get(i);
                 variable.setValue(value);
                 variables.set(i, variable);
+                // TODO : make sure value is of good type
             }
         }
     }

@@ -1,12 +1,12 @@
 public class Variable {
     private String key;
+    private String type;
     private String value;
 
-    public Variable(String key, String value) {
+    public Variable(String key, String type) {
         this.key = key;
-        this.value = value;
-        // TODO : add var type ???
-        // TODO : cant know value when declare
+        this.type = type;
+        this.value = "";
     }
 
     public String getKey() {

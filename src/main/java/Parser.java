@@ -101,9 +101,7 @@ public class Parser {
         }
 
         if (status.isValid()) {
-            // TODO : create the variable
-//            createVariable(var.getValue(), type.getValue());
-//            storage.add();
+            storage.add(var.getValue(), type.getValue());
         }
     }
 
