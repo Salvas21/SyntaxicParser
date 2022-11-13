@@ -1,9 +1,12 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Parser {
     private final TokenStream tokenStream;
     private ParserStatus status;
     private VariableStorage storage;
+
+    private String[] types = {"entier", "reel"};
     public Parser(TokenStream tokenStream) {
         this.tokenStream = tokenStream;
     }
@@ -17,7 +20,7 @@ public class Parser {
     private ParserStatus procedure() {
         Token t = tokenStream.peek();
         if (!(t.getType() == TokenType.KEYWORD && t.getValue().equals("Procedure"))) {
-            status = new ParserStatus(false, "Keyword : " + t.getValue() + ", ne correspond pas à un début de procédure");
+            status = new ParserStatus(false, "Keyword : '" + t.getValue() + "', ne correspond pas à un début de procédure");
         }
 
         tokenStream.next();
@@ -31,12 +34,39 @@ public class Parser {
         if (status.isValid()) {
             affectations();
         }
+
+        // end of procedure
+        // programId
         return status;
     }
 
     private void identifier() {
         Token t = tokenStream.next();
-        if (!(t.getType() == TokenType.IDENTIFIER)) status = new ParserStatus(false, "Identifiant : " + t.getValue() + ", n'est pas accepté");
+        if (!(t.getType() == TokenType.IDENTIFIER)) status = new ParserStatus(false, "Identifiant : '" + t.getValue() + "', n'est pas accepté");
+    }
+
+    private void keyword(String keyword) {
+        Token t = tokenStream.next();
+        if (t.getType() != TokenType.KEYWORD || !t.getValue().equals(keyword)) status = new ParserStatus(false, "Keyword : '" + t.getValue() + "', n'est pas reconnu");
+    }
+
+    private void punctuation(String punc) {
+        Token t = tokenStream.next();
+        if (t.getType() != TokenType.PUNCTUATION || !t.getValue().equals(punc)) status = new ParserStatus(false, "Ponctuation : '" + t.getValue() + "', n'est pas reconnue");
+    }
+
+    private void operator(String op) {
+        Token t = tokenStream.next();
+        if (t.getType() != TokenType.OPERATOR || !t.getValue().equals(op)) status = new ParserStatus(false, "Operateur : '" + t.getValue() + "', n'est pas reconnu");
+    }
+
+    private void type() {
+        Token t = tokenStream.next();
+        if (t.getType() != TokenType.TYPE || notIn(types, t.getValue())) status = new ParserStatus(false, "Type : '" + t.getValue() + "', n'est pas reconnu");
+    }
+
+    private boolean notIn(String[] a, String s) {
+        return !Arrays.asList(a).contains(s);
     }
 
     private void declarations() {
@@ -50,29 +80,34 @@ public class Parser {
     }
 
     private void declaration() {
-        Token declare = tokenStream.next();
-        if (declare.getType() != TokenType.KEYWORD || !declare.getValue().equals("declare")) status = new ParserStatus(false, "Keyword : " + declare.getValue() + ", n'est pas reconnu");
-//        keyword();
-//        if (status.isValid()) {}
-        Token var = tokenStream.next();
-//        identifier();
+        keyword("declare");
 
-        Token is = tokenStream.next();
-        Token type = tokenStream.next();
-        Token semicolon = tokenStream.next();
+        Token var = tokenStream.peek();
+        if (status.isValid()) {
+            identifier();
+        }
 
-//        createVariable();
+        if (status.isValid()) {
+            operator(":");
+        }
+
+        Token type = tokenStream.peek();
+        if (status.isValid()) {
+            type();
+        }
+
+        if (status.isValid()) {
+            punctuation(";");
+        }
+
+        if (status.isValid()) {
+            // TODO : create the variable
+//            createVariable(var.getValue(), type.getValue());
+//            storage.add();
+        }
     }
 
     private void affectations() {
 
     }
-
-    /*
-        Token{type=KEYWORD, value='declare'}
-        Token{type=IDENTIFIER, value='a'}
-        Token{type=OPERATOR, value=':'}
-        Token{type=KEYWORD, value='entier'}
-        Token{type=PUNCTUATION, value=';'}
-     */
 }

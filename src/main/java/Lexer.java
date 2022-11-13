@@ -3,7 +3,8 @@ import java.util.Arrays;
 
 public class Lexer {
     private final InputStream inputStream;
-    private final String[] keywords = {"Procedure", "Fin_Procedure", "declare", "entier", "reel"};
+    private final String[] keywords = {"Procedure", "Fin_Procedure", "declare"};
+    private final String[] types = {"entier", "reel"};
     private ArrayList<Token> tokens;
 
     public Lexer(InputStream inputStream) {
@@ -64,6 +65,10 @@ public class Lexer {
         return Arrays.asList(keywords).contains(identifier);
     }
 
+    private boolean isType(String identifier) {
+        return Arrays.asList(types).contains(identifier);
+    }
+
     private void readIdentifier() {
         StringBuilder identifier = new StringBuilder();
         char c = inputStream.peek();
@@ -75,7 +80,7 @@ public class Lexer {
 
         boolean semicolon = hasSemicolon(identifier.toString());
         String id = semicolon ? removeSemicolon(identifier.toString()) : identifier.toString();
-        TokenType tokenType = isKeyword(id) ? TokenType.KEYWORD : TokenType.IDENTIFIER;
+        TokenType tokenType = isKeyword(id) ? TokenType.KEYWORD : isType(id) ? TokenType.TYPE : TokenType.IDENTIFIER;
 
         // TODO : identifier ne doit pas etre plus long que 8 char, dans lexical ou syntaxique ?
         tokens.add(new Token(tokenType, id));
