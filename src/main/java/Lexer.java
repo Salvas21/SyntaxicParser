@@ -46,9 +46,16 @@ public class Lexer {
         }
         if (inputStream.endOfStream()) digit.append(inputStream.next());
         // TODO : check if digit has only 1 ,
+
         boolean semicolon = hasSemicolon(digit.toString());
-        String number = semicolon ? removeSemicolon(digit.toString()) : digit.toString();
+        String number = semicolon ? removeEndChar(digit.toString()) : digit.toString();
+
+        boolean parenthesis = hasEndParenthesis(number);
+        if (parenthesis) number = removeEndChar(number);
+
         tokens.add(new Token(TokenType.NUMBER, number));
+
+        if (parenthesis) tokens.add(new Token(TokenType.PUNCTUATION, ")"));
         if (semicolon) tokens.add(new Token(TokenType.PUNCTUATION, ";"));
     }
 
@@ -60,8 +67,12 @@ public class Lexer {
         return s.contains(";");
     }
 
-    private String removeSemicolon(String identifier) {
+    private String removeEndChar(String identifier) {
         return identifier.substring(0, identifier.length() - 1);
+    }
+
+    private boolean hasEndParenthesis(String s) {
+        return s.contains(")");
     }
 
     private boolean isKeyword(String identifier) {
@@ -82,11 +93,17 @@ public class Lexer {
         if (inputStream.endOfStream()) identifier.append(inputStream.next());
 
         boolean semicolon = hasSemicolon(identifier.toString());
-        String id = semicolon ? removeSemicolon(identifier.toString()) : identifier.toString();
+        String id = semicolon ? removeEndChar(identifier.toString()) : identifier.toString();
+
+        boolean parenthesis = hasEndParenthesis(id);
+        if (parenthesis) id = removeEndChar(id);
+
         TokenType tokenType = isKeyword(id) ? TokenType.KEYWORD : isType(id) ? TokenType.TYPE : TokenType.IDENTIFIER;
 
         // TODO : identifier ne doit pas etre plus long que 8 char, dans lexical ou syntaxique ?
         tokens.add(new Token(tokenType, id));
+
+        if (parenthesis) tokens.add(new Token(TokenType.PUNCTUATION, ")"));
         if (semicolon) tokens.add(new Token(TokenType.PUNCTUATION, ";"));
     }
 

@@ -20,7 +20,7 @@ public class TokenStream implements Stream<Token> {
 
     @Override
     public boolean endOfStream() {
-        return position >= tokens.size() - 1;
+        return position >= tokens.size();
     }
 
     public ArrayList<Token> getTokens() {

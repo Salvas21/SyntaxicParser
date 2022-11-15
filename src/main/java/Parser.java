@@ -18,9 +18,9 @@ public class Parser {
     }
 
     private ParserStatus procedure() {
-        Token t = tokenStream.peek();
-        if (!(t.getType() == TokenType.KEYWORD && t.getValue().equals("Procedure"))) {
-            status = new ParserStatus(false, "Keyword : '" + t.getValue() + "', ne correspond pas à un début de procédure");
+        Token proc = tokenStream.peek();
+        if (!(proc.getType() == TokenType.KEYWORD && proc.getValue().equals("Procedure"))) {
+            status = new ParserStatus(false, "Keyword : '" + proc.getValue() + "', ne correspond pas à un début de procédure");
         }
 
         tokenStream.next();
@@ -34,10 +34,18 @@ public class Parser {
         if (canContinue()) {
             affectations();
         }
-        // TODO : what to do if cant continue
+        // TODO : what to do if cant continue from end of stream but no errors but still not complete ?
 
-        // end of procedure
-        // programId
+        if (canContinue()) {
+            keyword("Fin_Procedure");
+            if (canContinue()) {
+                Token endProgramId = tokenStream.peek();
+                identifier();
+                if (status.isValid() && !programId.getValue().equals(endProgramId.getValue())) {
+                    status = new ParserStatus(false, "Identifiant de fin de programme : '" + endProgramId.getValue() + "', n'est pas accepté");
+                }
+            }
+        }
         return status;
     }
 
@@ -155,6 +163,7 @@ public class Parser {
                     operator("-");
                 }
                 term();
+                if (canContinue()) t = tokenStream.peek();
             }
         }
     }
@@ -170,6 +179,7 @@ public class Parser {
                     operator("/");
                 }
                 factor();
+                if (canContinue()) t = tokenStream.peek();
             }
         }
     }
@@ -183,8 +193,7 @@ public class Parser {
                 status = new ParserStatus(true, "");
             } else if (t.getType() == TokenType.PUNCTUATION) {
                 status = new ParserStatus(true, "");
-                punctuation("("); // TODO : marchera pas faut surement faire un if punctuation et == '('
-                if (canContinue()) {
+                if (t.getValue().equals("(")) {
                     expression();
                 }
                 if (canContinue()) {
