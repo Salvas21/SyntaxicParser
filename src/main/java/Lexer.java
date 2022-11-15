@@ -46,7 +46,10 @@ public class Lexer {
         }
         if (inputStream.endOfStream()) digit.append(inputStream.next());
         // TODO : check if digit has only 1 ,
-        tokens.add(new Token(TokenType.NUMBER, digit.toString()));
+        boolean semicolon = hasSemicolon(digit.toString());
+        String number = semicolon ? removeSemicolon(digit.toString()) : digit.toString();
+        tokens.add(new Token(TokenType.NUMBER, number));
+        if (semicolon) tokens.add(new Token(TokenType.PUNCTUATION, ";"));
     }
 
     private boolean isIdentifier(char c) {

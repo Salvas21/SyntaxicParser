@@ -34,6 +34,7 @@ public class Parser {
         if (canContinue()) {
             affectations();
         }
+        // TODO : what to do if cant continue
 
         // end of procedure
         // programId
@@ -43,6 +44,14 @@ public class Parser {
     private void identifier() {
         Token t = tokenStream.next();
         if (!(t.getType() == TokenType.IDENTIFIER)) status = new ParserStatus(false, "Identifiant : '" + t.getValue() + "', n'est pas accepté");
+    }
+
+    private void variable() {
+        Token t = tokenStream.peek();
+        identifier();
+        if (canContinue()) {
+            if (storage.getVariable(t.getValue()) == null) status = new ParserStatus(false, "Variable : '" + t.getValue() + "', n'est pas définie");
+        }
     }
 
     private void keyword(String keyword) {
@@ -124,7 +133,7 @@ public class Parser {
 
     private void affectation() {
         if (canContinue()) {
-            identifier();
+            variable();
         }
         if (canContinue()) {
             operator("=");
@@ -132,49 +141,56 @@ public class Parser {
         if (canContinue()) {
             expression();
         }
+
     }
 
     private void expression() {
         term();
-        Token t = tokenStream.peek();
-        System.out.println(t.getType() == TokenType.OPERATOR);
-        while (canContinue() && (t.getType() == TokenType.OPERATOR && t.getValue().equals("+") || t.getValue().equals("-"))) {
-            if (t.getValue().equals("+")) {
-                operator("+");
-            } else if (t.getValue().equals("-")) {
-                operator("-");
+        if (canContinue()) {
+            Token t = tokenStream.peek();
+            while (canContinue() && (t.getType() == TokenType.OPERATOR && t.getValue().equals("+") || t.getValue().equals("-"))) {
+                if (t.getValue().equals("+")) {
+                    operator("+");
+                } else if (t.getValue().equals("-")) {
+                    operator("-");
+                }
+                term();
             }
-            term();
         }
     }
 
     private void term() {
         factor();
-        Token t = tokenStream.peek();
-        while (canContinue() && t.getType() == TokenType.OPERATOR && t.getValue().equals("*") || t.getValue().equals("/")) {
-            if (t.getValue().equals("*")) {
-                operator("*");
-            } else if (t.getValue().equals("/")) {
-                operator("/");
+        if (canContinue()) {
+            Token t = tokenStream.peek();
+            while (canContinue() && t.getType() == TokenType.OPERATOR && t.getValue().equals("*") || t.getValue().equals("/")) {
+                if (t.getValue().equals("*")) {
+                    operator("*");
+                } else if (t.getValue().equals("/")) {
+                    operator("/");
+                }
+                factor();
             }
-            factor();
         }
     }
 
     private void factor() {
-        Token var = tokenStream.peek();
-        identifier();
-        if (!status.isValid()) {
-            Token t = tokenStream.peek();
-            if (!(t.getType() == TokenType.NUMBER)) {
-                punctuation("(");
-                expression();
-                punctuation(")");
+        Token t = tokenStream.peek();
+        variable();
+        // if not a variable
+        if (!status.isValid() && !tokenStream.endOfStream()) {
+            if (t.getType() == TokenType.NUMBER) {
+                status = new ParserStatus(true, "");
+            } else if (t.getType() == TokenType.PUNCTUATION) {
+                status = new ParserStatus(true, "");
+                punctuation("("); // TODO : marchera pas faut surement faire un if punctuation et == '('
+                if (canContinue()) {
+                    expression();
+                }
+                if (canContinue()) {
+                    punctuation(")");
+                }
             }
-        }
-
-        if (storage.getVariable(var.getValue()) == null) {
-            status = new ParserStatus(false, "Variable : '" + var.getValue() + "', n'est pas définie");
         }
     }
 
