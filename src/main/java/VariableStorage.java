@@ -22,15 +22,20 @@ public class VariableStorage {
         variables.removeIf(v -> v.getKey().equals(key));
     }
 
-    public void update(String key, String value) {
+    public boolean update(String key, String value) {
         Variable variable = null;
+        boolean status = false;
         for (int i = 0; i < variables.size() && variable == null; i++) {
             if (variables.get(i).getKey().equals(key)) {
                 variable = variables.get(i);
-                variable.setValue(value);
-                variables.set(i, variable);
-                // TODO : make sure value is of good type
+                if (variable.isRightType(value)) {
+                    variable.setValue(value);
+                    variables.set(i, variable);
+                    status = true;
+                }
             }
         }
+        // variable invalide ou type invalide
+        return status;
     }
 }

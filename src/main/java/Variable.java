@@ -20,4 +20,22 @@ public class Variable {
     public void setValue(String value) {
         this.value = value;
     }
+
+    public boolean isRightType(String value) {
+        boolean status = true;
+        if (type.equals("entier")) {
+            try {
+                Integer.parseInt(value);
+            } catch(NumberFormatException e) {
+                status = false;
+            }
+        } else if (type.equals("reel")) {
+            try {
+                Float.parseFloat(value);
+            } catch(NumberFormatException e) {
+                status = false;
+            }
+        }
+        return status;
+    }
 }

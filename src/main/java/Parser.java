@@ -27,11 +27,11 @@ public class Parser {
         Token programId = tokenStream.peek();
         identifier();
 
-        if (status.isValid()) {
+        if (canContinue()) {
             declarations();
         }
 
-        if (status.isValid()) {
+        if (canContinue()) {
             affectations();
         }
 
@@ -76,36 +76,109 @@ public class Parser {
                 declaration();
             }
             t = tokenStream.peek();
-        } while (!tokenStream.endOfStream() && (t.getType() == TokenType.KEYWORD && t.getValue().equals("declare")));
+        } while (canContinue() && (t.getType() == TokenType.KEYWORD && t.getValue().equals("declare")));
     }
 
     private void declaration() {
         keyword("declare");
 
+        // TODO : could break ?
         Token var = tokenStream.peek();
-        if (status.isValid()) {
+        if (canContinue()) {
             identifier();
         }
 
-        if (status.isValid()) {
+        if (canContinue()) {
             operator(":");
         }
 
         Token type = tokenStream.peek();
-        if (status.isValid()) {
+        if (canContinue()) {
             type();
         }
 
-        if (status.isValid()) {
+        if (canContinue()) {
             punctuation(";");
         }
 
-        if (status.isValid()) {
+        if (canContinue()) {
             storage.add(var.getValue(), type.getValue());
         }
     }
 
     private void affectations() {
+        Token t = tokenStream.peek();
+        do {
+            if (t.getType() == TokenType.IDENTIFIER) {
+                affectation();
+            } else if (t.getType() == TokenType.PUNCTUATION && t.getValue().equals(";")) {
+                tokenStream.next();
+                t = tokenStream.peek();
+                if (t.getType() == TokenType.IDENTIFIER) {
+                    affectation();
+                }
+            }
+            t = tokenStream.peek();
+        } while (canContinue() && (t.getType() == TokenType.PUNCTUATION && t.getValue().equals(";")));
+    }
 
+    private void affectation() {
+        if (canContinue()) {
+            identifier();
+        }
+        if (canContinue()) {
+            operator("=");
+        }
+        if (canContinue()) {
+            expression();
+        }
+    }
+
+    private void expression() {
+        term();
+        Token t = tokenStream.peek();
+        System.out.println(t.getType() == TokenType.OPERATOR);
+        while (canContinue() && (t.getType() == TokenType.OPERATOR && t.getValue().equals("+") || t.getValue().equals("-"))) {
+            if (t.getValue().equals("+")) {
+                operator("+");
+            } else if (t.getValue().equals("-")) {
+                operator("-");
+            }
+            term();
+        }
+    }
+
+    private void term() {
+        factor();
+        Token t = tokenStream.peek();
+        while (canContinue() && t.getType() == TokenType.OPERATOR && t.getValue().equals("*") || t.getValue().equals("/")) {
+            if (t.getValue().equals("*")) {
+                operator("*");
+            } else if (t.getValue().equals("/")) {
+                operator("/");
+            }
+            factor();
+        }
+    }
+
+    private void factor() {
+        Token var = tokenStream.peek();
+        identifier();
+        if (!status.isValid()) {
+            Token t = tokenStream.peek();
+            if (!(t.getType() == TokenType.NUMBER)) {
+                punctuation("(");
+                expression();
+                punctuation(")");
+            }
+        }
+
+        if (storage.getVariable(var.getValue()) == null) {
+            status = new ParserStatus(false, "Variable : '" + var.getValue() + "', n'est pas définie");
+        }
+    }
+
+    private boolean canContinue() {
+        return status.isValid() && !tokenStream.endOfStream();
     }
 }
