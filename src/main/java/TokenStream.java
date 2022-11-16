@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 
 public class TokenStream implements Stream<Token> {
-    private ArrayList<Token> tokens;
+    private final ArrayList<Token> tokens;
     private int position = 0;
 
     public TokenStream(ArrayList<Token> tokens) {
@@ -21,9 +21,5 @@ public class TokenStream implements Stream<Token> {
     @Override
     public boolean endOfStream() {
         return position >= tokens.size();
-    }
-
-    public ArrayList<Token> getTokens() {
-        return tokens;
     }
 }

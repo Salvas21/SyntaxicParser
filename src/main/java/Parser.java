@@ -5,7 +5,7 @@ public class Parser {
     private ParserStatus status;
     private VariableStorage storage;
 
-    private String[] types = {"entier", "reel"};
+    private final String[] types = {"entier", "reel"};
 
     public Parser(TokenStream tokenStream) {
         this.tokenStream = tokenStream;
@@ -28,7 +28,6 @@ public class Parser {
 
         if (canContinue()) declarations();
         if (canContinue()) affectations();
-        // TODO : what to do if cant continue from end of stream but no errors but still not complete ?
 
         if (canContinue()) {
             keyword("Fin_Procedure");
@@ -45,41 +44,47 @@ public class Parser {
 
     private void identifier() {
         Token t = tokenStream.next();
-        if (!(t.getType() == TokenType.IDENTIFIER))
+        if (!(t.getType() == TokenType.IDENTIFIER)) {
             status = new ParserStatus(false, "Identifiant : '" + t.getValue() + "', n'est pas accepté");
+        }
     }
 
     private void variable() {
         Token t = tokenStream.peek();
         identifier();
         if (canContinue()) {
-            if (storage.getVariable(t.getValue()) == null)
+            if (storage.getVariable(t.getValue()) == null) {
                 status = new ParserStatus(false, "Variable : '" + t.getValue() + "', n'est pas définie");
+            }
         }
     }
 
     private void keyword(String keyword) {
         Token t = tokenStream.next();
-        if (t.getType() != TokenType.KEYWORD || !t.getValue().equals(keyword))
+        if (t.getType() != TokenType.KEYWORD || !t.getValue().equals(keyword)) {
             status = new ParserStatus(false, "Keyword : '" + t.getValue() + "', n'est pas reconnu");
+        }
     }
 
     private void punctuation(String punc) {
         Token t = tokenStream.next();
-        if (t.getType() != TokenType.PUNCTUATION || !t.getValue().equals(punc))
+        if (t.getType() != TokenType.PUNCTUATION || !t.getValue().equals(punc)) {
             status = new ParserStatus(false, "Ponctuation : '" + t.getValue() + "', n'est pas reconnue");
+        }
     }
 
     private void operator(String op) {
         Token t = tokenStream.next();
-        if (t.getType() != TokenType.OPERATOR || !t.getValue().equals(op))
-            status = new ParserStatus(false, "Operateur : '" + t.getValue() + "', n'est pas reconnu");
+        if (t.getType() != TokenType.OPERATOR || !t.getValue().equals(op)) {
+            status = new ParserStatus(false, "Opérateur : '" + t.getValue() + "', n'est pas reconnu");
+        }
     }
 
     private void type() {
         Token t = tokenStream.next();
-        if (t.getType() != TokenType.TYPE || notIn(types, t.getValue()))
+        if (t.getType() != TokenType.TYPE || notIn(types, t.getValue())) {
             status = new ParserStatus(false, "Type : '" + t.getValue() + "', n'est pas reconnu");
+        }
     }
 
     private boolean notIn(String[] a, String s) {
@@ -103,27 +108,20 @@ public class Parser {
 
     private void declaration() {
         keyword("declare");
+        Token var = null;
+        Token type = null;
 
-        // TODO : could break ?
-        Token var = tokenStream.peek();
-        if (canContinue()) {
-            identifier();
-        }
+        if (canContinue()) var = tokenStream.peek();
+        if (canContinue()) identifier();
 
-        if (canContinue()) {
-            operator(":");
-        }
+        if (canContinue()) operator(":");
 
-        Token type = tokenStream.peek();
-        if (canContinue()) {
-            type();
-        }
+        if (canContinue()) type = tokenStream.peek();
+        if (canContinue()) type();
 
-        if (canContinue()) {
-            punctuation(";");
-        }
+        if (canContinue()) punctuation(";");
 
-        if (canContinue()) {
+        if (canContinue() && var != null && type != null) {
             storage.add(var.getValue(), type.getValue());
         }
 
@@ -154,15 +152,9 @@ public class Parser {
     }
 
     private void affectation() {
-        if (canContinue()) {
-            variable();
-        }
-        if (canContinue()) {
-            operator("=");
-        }
-        if (canContinue()) {
-            expression();
-        }
+        if (canContinue()) variable();
+        if (canContinue()) operator("=");
+        if (canContinue()) expression();
         if (status.isValid() && tokenStream.endOfStream()) {
             status = new ParserStatus(false, "Fin abrupte du code dans le bloc d'affectation");
         }
@@ -209,15 +201,12 @@ public class Parser {
         // if not a variable
         if (!status.isValid() && !tokenStream.endOfStream()) {
             if (t.getType() == TokenType.NUMBER) {
+                // reset parser status
                 status = new ParserStatus(true, "");
             } else if (t.getType() == TokenType.PUNCTUATION) {
                 status = new ParserStatus(true, "");
-                if (t.getValue().equals("(")) {
-                    expression();
-                }
-                if (canContinue()) {
-                    punctuation(")");
-                }
+                if (t.getValue().equals("(")) expression();
+                if (canContinue()) punctuation(")");
             }
         }
     }

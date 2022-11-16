@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 
 public class VariableStorage {
-    private ArrayList<Variable> variables;
+    private final ArrayList<Variable> variables;
 
     public VariableStorage() {
         variables = new ArrayList<>();

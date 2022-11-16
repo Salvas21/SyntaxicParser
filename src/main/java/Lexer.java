@@ -11,11 +11,11 @@ public class Lexer {
         this.inputStream = inputStream;
     }
 
-    public TokenStream lex() {
+    public TokenStream lex() throws Exception {
         tokens = new ArrayList<>();
 
         while (!inputStream.endOfStream()) {
-            readWhile(' ');
+            removeWhitespaces();
             if (inputStream.endOfStream()) return null;
             char c = inputStream.peek();
             if (isDigit(c)) readDigit();
@@ -27,8 +27,8 @@ public class Lexer {
         return new TokenStream(tokens);
     }
 
-    private void readWhile(char c) {
-        while (!inputStream.endOfStream() && inputStream.peek() == c) {
+    private void removeWhitespaces() {
+        while (!inputStream.endOfStream() && inputStream.peek() == ' ') {
             inputStream.next();
         }
     }
@@ -37,24 +37,22 @@ public class Lexer {
         return Character.isDigit(c);
     }
 
-    private void readDigit() {
-        StringBuilder digit = new StringBuilder();
-        char c = inputStream.peek();
-        while (!inputStream.endOfStream() && c != ' ') {
-            digit.append(inputStream.next());
-            c = inputStream.peek();
-        }
-        if (inputStream.endOfStream()) digit.append(inputStream.next());
-        // TODO : check if digit has only 1 ,
+    private void readDigit() throws Exception {
+        String digit = getSequence();
 
-        boolean semicolon = hasSemicolon(digit.toString());
-        String number = semicolon ? removeEndChar(digit.toString()) : digit.toString();
+        validateNumberConditions(digit);
 
+        // remove end semicolon
+        boolean semicolon = hasSemicolon(digit);
+        String number = semicolon ? removeEndChar(digit) : digit;
+
+        // remove end parenthesis
         boolean parenthesis = hasEndParenthesis(number);
         if (parenthesis) number = removeEndChar(number);
 
         tokens.add(new Token(TokenType.NUMBER, number));
 
+        // add tokens of removed chars
         if (parenthesis) tokens.add(new Token(TokenType.PUNCTUATION, ")"));
         if (semicolon) tokens.add(new Token(TokenType.PUNCTUATION, ";"));
     }
@@ -83,24 +81,21 @@ public class Lexer {
         return Arrays.asList(types).contains(identifier);
     }
 
-    private void readIdentifier() {
-        StringBuilder identifier = new StringBuilder();
-        char c = inputStream.peek();
-        while (!inputStream.endOfStream() && c != ' ') {
-            identifier.append(inputStream.next());
-            c = inputStream.peek();
-        }
-        if (inputStream.endOfStream()) identifier.append(inputStream.next());
+    private void readIdentifier() throws Exception {
+        String identifier = getSequence();
 
-        boolean semicolon = hasSemicolon(identifier.toString());
-        String id = semicolon ? removeEndChar(identifier.toString()) : identifier.toString();
+        boolean semicolon = hasSemicolon(identifier);
+        String id = semicolon ? removeEndChar(identifier) : identifier;
 
         boolean parenthesis = hasEndParenthesis(id);
         if (parenthesis) id = removeEndChar(id);
 
         TokenType tokenType = isKeyword(id) ? TokenType.KEYWORD : isType(id) ? TokenType.TYPE : TokenType.IDENTIFIER;
 
-        // TODO : identifier ne doit pas etre plus long que 8 char, dans lexical ou syntaxique ?
+        if (tokenType == TokenType.IDENTIFIER) {
+            validateIdentifierConditions(id);
+        }
+
         tokens.add(new Token(tokenType, id));
 
         if (parenthesis) tokens.add(new Token(TokenType.PUNCTUATION, ")"));
@@ -122,5 +117,34 @@ public class Lexer {
 
     private void readOperator() {
         tokens.add(new Token(TokenType.OPERATOR, inputStream.next().toString()));
+    }
+
+    private String getSequence() {
+        StringBuilder digit = new StringBuilder();
+        char c = inputStream.peek();
+        while (!inputStream.endOfStream() && c != ' ') {
+            digit.append(inputStream.next());
+            c = inputStream.peek();
+        }
+        if (inputStream.endOfStream()) digit.append(inputStream.next());
+        return digit.toString();
+    }
+
+    private void validateNumberConditions(String digit) throws Exception {
+        long nbOfLetters = digit.chars().filter(Character::isAlphabetic).count();
+        if (nbOfLetters > 0) {
+            throw new Exception("Nombre '" + digit + "', invalide");
+        }
+
+        long commaAmount = digit.chars().filter(ch -> ch == ',').count();
+        if (commaAmount > 1) {
+            throw new Exception("Nombre '" + digit + "', invalide");
+        }
+    }
+
+    private void validateIdentifierConditions(String identifier) throws Exception {
+        if (identifier.length() > 8) {
+            throw new Exception("Identifiant '" + identifier + "', invalide");
+        }
     }
 }

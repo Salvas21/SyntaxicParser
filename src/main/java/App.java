@@ -1,44 +1,32 @@
 public class App {
     public static void main(String[] args) {
-        System.out.println();
         simpleAnalysis();
-        System.out.println();
         mediumAnalysis();
-        System.out.println();
         hardAnalysis();
-        System.out.println();
         simpleBadAnalysis();
-        System.out.println();
         mediumBadAnalysis();
-        System.out.println();
         hardBadAnalysis();
     }
 
     private static void simpleAnalysis() {
+        System.out.println();
         String input = "Procedure Toto declare a : entier; a = 42 Fin_Procedure Toto";
         System.out.println(input);
-        InputStream inputStream = InputFormatter.format(input);
-        TokenStream tokenStream = (new Lexer(inputStream)).lex();
-        ParserStatus status = (new Parser(tokenStream)).parse();
-        System.out.println(status);
+        executeAnalysis(input);
     }
 
     private static void mediumAnalysis() {
+        System.out.println();
         String input = "Procedure sandwich declare toto : reel; declare martin : entier; toto = 47.5; martin = 42 * 2 Fin_Procedure sandwich";
         System.out.println(input);
-        InputStream inputStream = InputFormatter.format(input);
-        TokenStream tokenStream = (new Lexer(inputStream)).lex();
-        ParserStatus status = (new Parser(tokenStream)).parse();
-        System.out.println(status);
+        executeAnalysis(input);
     }
 
     private static void hardAnalysis() {
+        System.out.println();
         String input = "Procedure Toto declare a : entier; declare B : reel; declare c : reel; a = 42; B = a; c = 2 * B + 2 - (2 * 4); a = (B + c) Fin_Procedure Toto";
         System.out.println(input);
-        InputStream inputStream = InputFormatter.format(input);
-        TokenStream tokenStream = (new Lexer(inputStream)).lex();
-        ParserStatus status = (new Parser(tokenStream)).parse();
-        System.out.println(status);
+        executeAnalysis(input);
     }
 
     /**
@@ -48,12 +36,10 @@ public class App {
      * la procedure, et reçoit au lieu l'identifiant de procedure Toto par le manque de Fin_Procedure
      */
     private static void simpleBadAnalysis() {
+        System.out.println();
         String input = "Procedure Toto declare a : entier; declare B : reel; declare c : reel; a = 42; B = a; c = 2 * B + 2 - (2 * 4); a = (B + c) Toto";
         System.out.println(input);
-        InputStream inputStream = InputFormatter.format(input);
-        TokenStream tokenStream = (new Lexer(inputStream)).lex();
-        ParserStatus status = (new Parser(tokenStream)).parse();
-        System.out.println(status);
+        executeAnalysis(input);
     }
 
     /**
@@ -63,12 +49,10 @@ public class App {
      *
      */
     private static void mediumBadAnalysis() {
+        System.out.println();
         String input = "Procedure Toto a = 42 Fin_Procedure Toto";
         System.out.println(input);
-        InputStream inputStream = InputFormatter.format(input);
-        TokenStream tokenStream = (new Lexer(inputStream)).lex();
-        ParserStatus status = (new Parser(tokenStream)).parse();
-        System.out.println(status);
+        executeAnalysis(input);
     }
 
     /**
@@ -76,15 +60,26 @@ public class App {
      * Parce que le code ne contient pas de Fin_Procedure, le bloc d'affectation commence
      * sa vérification à cause de l'identifiant Toto, qui est considéré comme une variable,
      * lorsque le code arrête (fin de l'input), l'analyseur n'a pas complété le bloc
-     * d'affectation (aucune affectation operateur =) donc il retourne l'erreur que le bloc n'est pas
+     * d'affectation (aucune affectation opérateur =) donc il retourne l'erreur que le bloc n'est pas
      * valide dans sa totalité.
      */
     private static void hardBadAnalysis() {
+        System.out.println();
         String input = "Procedure Toto declare a : entier; Toto";
         System.out.println(input);
+        executeAnalysis(input);
+    }
+
+    private static void executeAnalysis(String input) {
         InputStream inputStream = InputFormatter.format(input);
-        TokenStream tokenStream = (new Lexer(inputStream)).lex();
-        ParserStatus status = (new Parser(tokenStream)).parse();
+        TokenStream tokenStream = null;
+        ParserStatus status = new ParserStatus(true, "");
+        try {
+            tokenStream = (new Lexer(inputStream)).lex();
+        } catch (Exception e) {
+            status = new ParserStatus(false, "Lexical -> " + e.getMessage());
+        }
+        status = status.isValid() ? (new Parser(tokenStream)).parse() : status;
         System.out.println(status);
     }
 }

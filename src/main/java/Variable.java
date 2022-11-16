@@ -1,6 +1,6 @@
 public class Variable {
-    private String key;
-    private String type;
+    private final String key;
+    private final String type;
     private String value;
 
     public Variable(String key, String type) {
