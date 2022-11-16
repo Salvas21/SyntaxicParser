@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Parser {
@@ -7,6 +6,7 @@ public class Parser {
     private VariableStorage storage;
 
     private String[] types = {"entier", "reel"};
+
     public Parser(TokenStream tokenStream) {
         this.tokenStream = tokenStream;
     }
@@ -22,18 +22,12 @@ public class Parser {
         if (!(proc.getType() == TokenType.KEYWORD && proc.getValue().equals("Procedure"))) {
             status = new ParserStatus(false, "Keyword : '" + proc.getValue() + "', ne correspond pas à un début de procédure");
         }
-
         tokenStream.next();
         Token programId = tokenStream.peek();
         identifier();
 
-        if (canContinue()) {
-            declarations();
-        }
-
-        if (canContinue()) {
-            affectations();
-        }
+        if (canContinue()) declarations();
+        if (canContinue()) affectations();
         // TODO : what to do if cant continue from end of stream but no errors but still not complete ?
 
         if (canContinue()) {
@@ -51,35 +45,41 @@ public class Parser {
 
     private void identifier() {
         Token t = tokenStream.next();
-        if (!(t.getType() == TokenType.IDENTIFIER)) status = new ParserStatus(false, "Identifiant : '" + t.getValue() + "', n'est pas accepté");
+        if (!(t.getType() == TokenType.IDENTIFIER))
+            status = new ParserStatus(false, "Identifiant : '" + t.getValue() + "', n'est pas accepté");
     }
 
     private void variable() {
         Token t = tokenStream.peek();
         identifier();
         if (canContinue()) {
-            if (storage.getVariable(t.getValue()) == null) status = new ParserStatus(false, "Variable : '" + t.getValue() + "', n'est pas définie");
+            if (storage.getVariable(t.getValue()) == null)
+                status = new ParserStatus(false, "Variable : '" + t.getValue() + "', n'est pas définie");
         }
     }
 
     private void keyword(String keyword) {
         Token t = tokenStream.next();
-        if (t.getType() != TokenType.KEYWORD || !t.getValue().equals(keyword)) status = new ParserStatus(false, "Keyword : '" + t.getValue() + "', n'est pas reconnu");
+        if (t.getType() != TokenType.KEYWORD || !t.getValue().equals(keyword))
+            status = new ParserStatus(false, "Keyword : '" + t.getValue() + "', n'est pas reconnu");
     }
 
     private void punctuation(String punc) {
         Token t = tokenStream.next();
-        if (t.getType() != TokenType.PUNCTUATION || !t.getValue().equals(punc)) status = new ParserStatus(false, "Ponctuation : '" + t.getValue() + "', n'est pas reconnue");
+        if (t.getType() != TokenType.PUNCTUATION || !t.getValue().equals(punc))
+            status = new ParserStatus(false, "Ponctuation : '" + t.getValue() + "', n'est pas reconnue");
     }
 
     private void operator(String op) {
         Token t = tokenStream.next();
-        if (t.getType() != TokenType.OPERATOR || !t.getValue().equals(op)) status = new ParserStatus(false, "Operateur : '" + t.getValue() + "', n'est pas reconnu");
+        if (t.getType() != TokenType.OPERATOR || !t.getValue().equals(op))
+            status = new ParserStatus(false, "Operateur : '" + t.getValue() + "', n'est pas reconnu");
     }
 
     private void type() {
         Token t = tokenStream.next();
-        if (t.getType() != TokenType.TYPE || notIn(types, t.getValue())) status = new ParserStatus(false, "Type : '" + t.getValue() + "', n'est pas reconnu");
+        if (t.getType() != TokenType.TYPE || notIn(types, t.getValue()))
+            status = new ParserStatus(false, "Type : '" + t.getValue() + "', n'est pas reconnu");
     }
 
     private boolean notIn(String[] a, String s) {
@@ -91,9 +91,14 @@ public class Parser {
         do {
             if (t.getType() == TokenType.KEYWORD && t.getValue().equals("declare")) {
                 declaration();
+            } else {
+                status = new ParserStatus(false, "Token invalide : '" + t.getValue() + "' dans le bloc de déclarations");
             }
-            t = tokenStream.peek();
+            if (canContinue()) t = tokenStream.peek();
         } while (canContinue() && (t.getType() == TokenType.KEYWORD && t.getValue().equals("declare")));
+        if (status.isValid() && tokenStream.endOfStream()) {
+            status = new ParserStatus(false, "Fin abrupte du code dans le bloc de déclarations");
+        }
     }
 
     private void declaration() {
@@ -121,6 +126,10 @@ public class Parser {
         if (canContinue()) {
             storage.add(var.getValue(), type.getValue());
         }
+
+        if (status.isValid() && tokenStream.endOfStream()) {
+            status = new ParserStatus(false, "Fin abrupte du code dans le bloc de déclaration");
+        }
     }
 
     private void affectations() {
@@ -134,9 +143,14 @@ public class Parser {
                 if (t.getType() == TokenType.IDENTIFIER) {
                     affectation();
                 }
+            } else {
+                status = new ParserStatus(false, "Token invalide : '" + t.getValue() + "' dans le bloc d'affectations");
             }
-            t = tokenStream.peek();
+            if (canContinue()) t = tokenStream.peek();
         } while (canContinue() && (t.getType() == TokenType.PUNCTUATION && t.getValue().equals(";")));
+        if (status.isValid() && tokenStream.endOfStream()) {
+            status = new ParserStatus(false, "Fin abrupte du code dans le bloc d'affectations");
+        }
     }
 
     private void affectation() {
@@ -149,7 +163,9 @@ public class Parser {
         if (canContinue()) {
             expression();
         }
-
+        if (status.isValid() && tokenStream.endOfStream()) {
+            status = new ParserStatus(false, "Fin abrupte du code dans le bloc d'affectation");
+        }
     }
 
     private void expression() {
@@ -165,6 +181,9 @@ public class Parser {
                 term();
                 if (canContinue()) t = tokenStream.peek();
             }
+        }
+        if (status.isValid() && tokenStream.endOfStream()) {
+            status = new ParserStatus(false, "Fin abrupte du code dans le bloc d'expression");
         }
     }
 
